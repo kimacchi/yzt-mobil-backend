@@ -38,6 +38,11 @@ async def post_item(item: Item):
     return {"item": item.hello, "members": members}
 
 
+@app.get("/qr-control/")
+async def qr_control_get():
+    return {"status": "ok"}
+    
+    
 @app.post("/qr-control/")
 async def qr_control(item: QRControl):
     if item.type == "ticket":
