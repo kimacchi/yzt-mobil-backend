@@ -2,6 +2,11 @@ from typing import Union
 from pocketbase import PocketBase
 from fastapi import FastAPI
 from pydantic import BaseModel
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -18,6 +23,7 @@ class QRControl(BaseModel):
     type: str
     event: str
     user: str
+    session: str # ! 01 02 03 04 05 11 12 13 14 15
 
 
 # Branch test
@@ -50,8 +56,14 @@ async def qr_control(item: QRControl):
             eventToBeControlled = client.collection("events").get_full_list()
             eventToBeControlled = [x for x in eventToBeControlled if x.id == item.event]
             eventToBeControlled = eventToBeControlled[0]
-            # return {"event": eventToBeControlled}
             if [x for x in eventToBeControlled.participants if x == item.user]:
+                email = os.environ.get("PB_AUTH_EMAIL")
+                password = os.environ.get("PB_AUTH_PASSWORD")
+                client.admins.auth_with_password(email, password)
+
+                # ! Add participant to the event to the correct session.
+                # * id should be as follows: aisecsecret0{day(0-1)session(1-5)} e.g. aisecsecret011 (first day, first session)
+                client.collection("events").update("ai2secsecret0" + item.session, {"participants+": item.user})
                 return {"ticketValidation": True}
             return {"ticketValidation": False}
         except:
